@@ -1,0 +1,56 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+  {
+      "type": "Feature",
+      "properties": {
+        "Pit_Stop_N": "Alexandria - Old Town",
+        "Pit_Stop_I": 580,
+        "Address": "301 King St Alexandria, VA 22314",
+        "Location": "Old Town at City Hall",
+        "Pit_Stop_T": "6:30 am - 8:30 am",
+        "More_Detai": "Visit pit stop page",
+        "Register_T": "Free registration",
+        "Pit_Stop_P": "http:\/\/www.biketoworkmetrodc.org\/archives\/580",
+        "Register_H": "http:\/\/www.biketoworkmetrodc.org\/register-now",
+        "Start_time": "6:30",
+        "End_Time": "8:30",
+        "LocationUR": " ",
+        "Extent": "-187.3598604665771,-43.53450788697705,-187.25659008918973,-43.53909535892833",
+        "OBJECTID": 1
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -187.35986046658,
+          -43.534507886977
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "Pit_Stop_N": "Alexandria - Old Town",
+        "Pit_Stop_I": 580,
+        "Address": "301 King St Alexandria, VA 22314",
+        "Location": "Old Town at City Hall",
+        "Pit_Stop_T": "6:30 am - 8:30 am",
+        "More_Detai": "Visit pit stop page",
+        "Register_T": "Free registration",
+        "Pit_Stop_P": "http:\/\/www.biketoworkmetrodc.org\/archives\/580",
+        "Register_H": "http:\/\/www.biketoworkmetrodc.org\/register-now",
+        "Start_time": "6:30",
+        "End_Time": "8:30",
+        "LocationUR": " ",
+        "Extent": "-187.3598604665771,-43.53450788697705,-187.25659008918973,-43.53909535892833",
+        "OBJECTID": 1
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+         -187.25659008918973,
+         -43.53909535892833
+        ]
+      }
+    }]
+}

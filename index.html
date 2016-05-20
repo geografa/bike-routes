@@ -1,0 +1,224 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>Bike to Work day</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <link href='https://www.mapbox.com/base/latest/base.css' rel='stylesheet' />
+    <script src="https://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="https://npmcdn.com/cheap-ruler@2.4.1/cheap-ruler.js" charset="utf-8"></script>
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.17.0/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.17.0/mapbox-gl.css' rel='stylesheet' />
+    <style>
+        body { margin:0; padding:0; }
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+        #counter {position:absolute; background:white;}
+        .mapboxgl-popup-tip, .mapboxgl-popup-content {
+          transform:scale(0);
+          transition:all 0.25s ease-out;
+        }
+        .visible .mapboxgl-popup-tip, .visible .mapboxgl-popup-content {
+          transform:scale(1);
+        }
+        .mapboxgl-popup-content {
+          padding:8px;
+          line-height:1.1em;
+          color:#aaa;
+          box-shadow:0 2px 2px rgba(0,0,0,0.25);
+        }
+        .marker {position:absolute; margin:-14px; pointer-events:all; cursor:-webkit-grab; z-index:99;}
+        .marker img {border:2px solid #eee; background:#07afda; border-radius:50%; position:absolute;padding:2px;}
+        .marker .tooltip {margin:3px 28px; background:white; opacity:0; padding:1px 12px;}
+        .marker:hover .tooltip {opacity:1;}
+        .marker:active {cursor:-webkit-grabbing;}
+
+        .mapboxgl-canvas-container.mapboxgl-interactive, .mapboxgl-ctrl-nav-compass {cursor:default;}
+
+        .mapboxgl-popup-anchor-right {
+          margin-left:-10px;
+        }
+
+        .mapboxgl-popup-anchor-left {
+          margin-left:10px;
+        }
+
+        .mapboxgl-popup-anchor-top {
+          margin-top:10px;
+        }
+        .mapboxgl-popup-anchor-bottom {
+          margin-top:-10px;
+        }
+        h6 {color:#07afda; display:block;}
+
+        .location {
+          max-width:150px;
+        }
+    </style>
+</head>
+<body>
+
+<div id='map'></div>
+
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoiZ3JhZmEiLCJhIjoiZjk3Mjk2YWYzZTNlYjM3ODdlNzJlOWJlM2VjZGI0ZDEifQ.OTT9oT7CqAc9vZsnJLT51Q';
+var map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/grafa/587d7dc0/',
+    zoom: 10,
+    pitch: 30,
+    center: [172.67726994629396,-43.52806860983228]
+});
+var waypoints;
+var mover;
+var endpoints = [[172.6205047796396,-43.53011227117329],[172.7471644010849,-43.56024078932554]];
+endpointImgs = ['home', 'work']
+
+d3.json('pitstops.geojson', function(err, resp){
+  var stops = resp.features;
+  console.log(stops)
+  stops.forEach(function(ft){
+    var tooltip = new mapboxgl.Popup({'closeButton':false})
+      .setLngLat(ft.geometry.coordinates)
+      .setHTML('<h6>'+ft.properties.Pit_Stop_N+'</h6><div class="location">'+ft.properties.Address+'</div><strong class="detour"></strong>')
+      .addTo(map);
+  })
+
+  var ruler = cheapRuler(39, 'meters');
+
+  map.on('load', function () {
+
+    var emptyGeojson = {"type":"FeatureCollection","features":[]};
+
+    map.addSource('directroute', {
+      type: 'geojson',
+      data: emptyGeojson
+    })
+    .addSource('routewithstops', {
+      type: 'geojson',
+      data: emptyGeojson
+    });
+
+    map
+    .addLayer({
+        "id": "directroute",
+        "type": "line",
+        "source": "directroute",
+        "layout": {
+
+        },
+        "paint": {
+            "line-color": "#07afda",
+            "line-width":3
+        }
+    }, 'dot-11')
+    .addLayer({
+        "id": "routewithstops",
+        "type": "line",
+        "source": "routewithstops",
+        "layout": {
+
+        },
+        "paint": {
+            "line-color": "#07afda",
+            "line-width":3
+        }
+    }, 'dot-11')
+
+    .on('zoom', function(){
+    });
+
+    var lnglat = map.getCenter();
+
+    var drag = d3.behavior.drag()
+      .on('dragstart', function(e){
+        map.getSource('directroute').setData(emptyGeojson);
+        d3.selectAll('.visible').classed('visible', false);
+      })
+      .on('drag', function(d,i) {
+        lnglat = map.unproject([d3.event.sourceEvent.clientX, d3.event.sourceEvent.clientY])
+        endpoints[i] = [lnglat.lng, lnglat.lat];
+        d3.select(this)
+          .attr('style', function() {
+            return '-webkit-transform:translateX(' + (d3.event.sourceEvent.clientX) + 'px) translateY(' + d3.event.sourceEvent.clientY + 'px)'
+          })
+      })
+      .on('dragend', function(){
+        drawLine()
+      })
+
+
+    d3.select('#map')
+      .selectAll('.marker')
+      .data(endpoints)
+      .enter()
+      .append('div')
+      .attr('class', 'marker z100')
+      .attr('style', function(d,i) {
+        var px = map.project(d);
+        return '-webkit-transform:translateX(' + px.x + 'px) translateY(' + px.y + 'px)'
+      })
+      .call(drag)
+      .append('img')
+      .style('margin', '2px')
+      .attr('src', function(d,i){
+        return endpointImgs[i]+'.svg'
+      })
+
+    d3.selectAll('.marker')
+      .append('div')
+      .attr('class', 'tooltip')
+      .text(function(d,i){return'Set '+ endpointImgs[i] +' location'})
+
+    map.on('move', function(){
+      d3.selectAll('.marker')
+        .data(endpoints)
+        .attr('style', function(d) {
+          var pixelCoords = map.project(d);
+          return '-webkit-transform:translateX(' + pixelCoords.x + 'px) translateY(' + pixelCoords.y + 'px)'
+        })
+    })
+
+
+    function drawLine(){
+
+      var queryURL = 'https://api.mapbox.com/v4/directions/mapbox.cycling/'+ endpoints[0]+';' +endpoints[1] +'.json?access_token=pk.eyJ1IjoiZ3JhZmEiLCJhIjoiZjk3Mjk2YWYzZTNlYjM3ODdlNzJlOWJlM2VjZGI0ZDEifQ.OTT9oT7CqAc9vZsnJLT51Q&geometries=geojson';
+
+      d3.json(queryURL, function(err, resp){
+        var rawCoords = resp.routes[0].geometry.coordinates;
+        console.log(rawCoords);
+        var bendyLine = {"type":"Feature","geometry":{"type":"LineString","coordinates":rawCoords}}
+        var routeDistance = resp.routes[0].distance;
+
+        map.getSource('directroute').setData(bendyLine);
+        var middleHalf = ruler.lineSliceAlong(0.3*routeDistance,0.7*routeDistance, rawCoords)
+        var distances = stops.map(function(stop){
+          var pt = stop.geometry.coordinates;
+          var ptOnLine = ruler.pointOnLine(rawCoords, pt).point;
+          return ruler.distance(pt, ptOnLine)
+        })
+        d3.selectAll('.mapboxgl-popup')
+          .classed('visible', function(d,i){
+            if (distances[i]<0.2*routeDistance) return true;
+            else return false;
+          })
+          .select('.detour')
+            .text(function(d,i){
+              if (distances[i]<0.2*routeDistance) return '('+ (distances[i]/1000).toFixed(2)+'km detour)';
+            })
+      })
+
+
+      map.fitBounds(endpoints,{padding:50, duration:2000})
+    }
+
+
+    drawLine();
+  });
+
+})
+
+</script>
+
+</body>
+</html>
